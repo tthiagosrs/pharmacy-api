@@ -9,14 +9,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy na EC2
+      - name: Deploy na DigitalOcean
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
+          username: root
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/pharmacy-api
             git pull origin main
-            sudo docker compose down
-            sudo docker compose up -d --build
+            docker compose down
+            docker compose up -d --build
