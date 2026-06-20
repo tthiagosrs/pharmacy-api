@@ -17,6 +17,10 @@ class RegisterInput(BaseModel):
     role: str
 
 
+class RefreshInput(BaseModel):
+    refresh_token: str
+
+
 @router.post("/login")
 def login(data: LoginInput):
     try:
@@ -26,11 +30,24 @@ def login(data: LoginInput):
         })
         return {
             "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
             "user_id": str(response.user.id),
             "email": response.user.email
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=401, detail="Email ou senha inválidos")
+
+
+@router.post("/refresh")
+def refresh(data: RefreshInput):
+    try:
+        response = supabase.auth.refresh_session(data.refresh_token)
+        return {
+            "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
+        }
+    except Exception:
+        raise HTTPException(status_code=401, detail="Sessão expirada")
 
 
 @router.post("/register")
