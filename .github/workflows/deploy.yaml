@@ -24,3 +24,6 @@ jobs:
             k3s kubectl rollout status deployment/farmaos-nginx --timeout=90s
             docker compose down
             docker compose up -d --build
+            docker save pharmacy-api-api:latest | k3s ctr images import -
+            k3s kubectl delete pods -l app=farmaos-api
+            k3s kubectl rollout status deployment/farmaos-api --timeout=90s
