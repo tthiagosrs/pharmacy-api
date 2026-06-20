@@ -18,5 +18,9 @@ jobs:
           script: |
             cd ~/pharmacy-api
             git pull origin main
+            k3s kubectl apply -f k8s/nginx-config.yaml
+            k3s kubectl apply -f k8s/nginx-deployment.yaml
+            k3s kubectl rollout restart deployment/farmaos-nginx
+            k3s kubectl rollout status deployment/farmaos-nginx --timeout=90s
             docker compose down
             docker compose up -d --build
