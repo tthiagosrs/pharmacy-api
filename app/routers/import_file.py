@@ -42,22 +42,22 @@ async def import_products(
             errors.append({"row": row_idx, "reason": "Nome do produto ausente"})
             continue
 
-        if date_raw is None or str(date_raw).strip() == "":
-            skipped_no_date += 1
-            continue
+        has_date = date_raw is not None and str(date_raw).strip() != ""
+        expiry_date = None
 
-        try:
-            if isinstance(date_raw, (datetime, date)):
-                expiry_date = (
-                    date_raw.strftime("%Y-%m-%d")
-                    if isinstance(date_raw, datetime)
-                    else date_raw.isoformat()
-                )
-            else:
-                expiry_date = datetime.strptime(str(date_raw).strip(), "%d/%m/%Y").strftime("%Y-%m-%d")
-        except ValueError:
-            errors.append({"row": row_idx, "reason": f"Data inválida: '{date_raw}' (esperado dd/mm/aaaa)"})
-            continue
+        if has_date:
+            try:
+                if isinstance(date_raw, (datetime, date)):
+                    expiry_date = (
+                        date_raw.strftime("%Y-%m-%d")
+                        if isinstance(date_raw, datetime)
+                        else date_raw.isoformat()
+                    )
+                else:
+                    expiry_date = datetime.strptime(str(date_raw).strip(), "%d/%m/%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                errors.append({"row": row_idx, "reason": f"Data inválida: '{date_raw}' (esperado dd/mm/aaaa)"})
+                continue
 
         product_id = None
 
@@ -87,6 +87,10 @@ async def import_products(
                     supabase.table("product_barcodes").insert(
                         {"product_id": product_id, "barcode": barcode}
                     ).execute()
+
+        if not has_date:
+            skipped_no_date += 1
+            continue
 
         dup = (
             supabase.table("expiry_items")
