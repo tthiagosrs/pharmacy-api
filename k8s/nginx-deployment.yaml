@@ -30,5 +30,5 @@ spec:
           name: nginx-config
       - name: web-files
         hostPath:
-          path: /root/farmaos-web
+          path: /var/www/farmaos-web
           type: Directory
