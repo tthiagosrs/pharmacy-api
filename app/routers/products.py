@@ -23,7 +23,11 @@ class ReorderItem(BaseModel):
 def list_active(user=Depends(get_current_user)):
     rows = (
         supabase.table("expiry_items")
-        .select("id, expiry_date, position, products(id, name, position), shelves(id, name)")
+        .select(
+            "id, expiry_date, position, "
+            "products(id, name, position, product_barcodes(barcode)), "
+            "shelves(id, name)"
+        )
         .order("position")
         .execute()
     )
@@ -37,6 +41,7 @@ def list_active(user=Depends(get_current_user)):
                 "id": pid,
                 "name": product["name"],
                 "position": product["position"],
+                "barcodes": [b["barcode"] for b in product.get("product_barcodes") or []],
                 "items": [],
             }
         groups[pid]["items"].append({
