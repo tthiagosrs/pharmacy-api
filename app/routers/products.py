@@ -14,6 +14,10 @@ class BarcodeAdd(BaseModel):
     barcode: str
 
 
+class ProductUpdate(BaseModel):
+    name: str
+
+
 class ReorderItem(BaseModel):
     id: str
     position: int
@@ -138,8 +142,29 @@ def add_barcode(product_id: str, data: BarcodeAdd, user=Depends(get_current_user
     return result.data[0]
 
 
+@router.delete("/{product_id}/barcodes/{barcode}")
+def remove_barcode(product_id: str, barcode: str, user=Depends(get_current_user)):
+    supabase.table("product_barcodes").delete().eq("product_id", product_id).eq(
+        "barcode", barcode
+    ).execute()
+    return {"ok": True}
+
+
 @router.patch("/reorder")
 def reorder(items: list[ReorderItem], user=Depends(get_current_user)):
     for item in items:
         supabase.table("products").update({"position": item.position}).eq("id", item.id).execute()
     return {"ok": True}
+
+
+@router.patch("/{product_id}")
+def update_product(product_id: str, data: ProductUpdate, user=Depends(get_current_user)):
+    result = (
+        supabase.table("products")
+        .update({"name": data.name})
+        .eq("id", product_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    return result.data[0]
