@@ -25,19 +25,28 @@ class ReorderItem(BaseModel):
 
 @router.get("/active")
 def list_active(user=Depends(get_current_user)):
-    rows = (
-        supabase.table("expiry_items")
-        .select(
-            "id, expiry_date, position, "
-            "products(id, name, position, product_barcodes(barcode)), "
-            "shelves(id, name)"
+    page_size = 1000
+    offset = 0
+    all_rows: list = []
+    while True:
+        resp = (
+            supabase.table("expiry_items")
+            .select(
+                "id, expiry_date, position, "
+                "products(id, name, position, product_barcodes(barcode)), "
+                "shelves(id, name)"
+            )
+            .order("position")
+            .range(offset, offset + page_size - 1)
+            .execute()
         )
-        .order("position")
-        .execute()
-    )
+        all_rows.extend(resp.data)
+        if len(resp.data) < page_size:
+            break
+        offset += page_size
 
     groups: dict = {}
-    for row in rows.data:
+    for row in all_rows:
         product = row["products"]
         pid = product["id"]
         if pid not in groups:
