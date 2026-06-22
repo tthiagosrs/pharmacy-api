@@ -21,6 +21,7 @@ class ProductUpdate(BaseModel):
 class ReorderItem(BaseModel):
     id: str
     position: int
+    name: str
 
 
 @router.get("/active")
@@ -161,8 +162,12 @@ def remove_barcode(product_id: str, barcode: str, user=Depends(get_current_user)
 
 @router.patch("/reorder")
 def reorder(items: list[ReorderItem], user=Depends(get_current_user)):
-    for item in items:
-        supabase.table("products").update({"position": item.position}).eq("id", item.id).execute()
+    if not items:
+        return {"ok": True}
+    payload = [
+        {"id": item.id, "position": item.position, "name": item.name} for item in items
+    ]
+    supabase.table("products").upsert(payload, on_conflict="id").execute()
     return {"ok": True}
 
 
